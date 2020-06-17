@@ -49,8 +49,3 @@ class CTData():
             label = torch.FloatTensor([0])
 
         return img_tensor, label
-
-
-
-
-        
