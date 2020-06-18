@@ -72,9 +72,15 @@ def train(config : dict):
 
         conf_matrix, train_loss, train_auc, train_acc = _train_model(
             model, train_loader, epoch, num_epochs, config['batch_size'], optimizer, criterion, writer, current_lr, log_train)
+        
+        print("Confusion matrix Train here...")
+        print(conf_matrix)
 
         conf_matrix_val, val_loss, val_auc, val_acc = _eval_model(
             model, val_loader, epoch, num_epochs, config['batch_size'], val_criterion, writer, log_val)
+
+        print("Confusion matrix Val here...")
+        print(conf_matrix_val)
 
         scheduler.step(val_loss)
 
@@ -88,12 +94,12 @@ def train(config : dict):
 
         writer.flush()
 
-        if val_auc > best_val_auc:
-            best_val_auc = val_auc
+        if val_acc > best_val_auc:
+            best_val_auc = val_acc
 
         # Decide when to save model
             if bool(config['save_model']):
-                file_name = 'model_{}_val_auc_{:0.4f}_train_auc_{:0.4f}_epoch_{}.pth'.format(config['name'], val_auc, train_auc, epoch+1)
+                file_name = 'model_{}_val_acc_{:0.4f}_epoch_{}.pth'.format(config['name'], val_acc, epoch+1)
                 torch.save({
                     'model_state_dict': model.state_dict()
                 }, './weights/{}'.format(file_name))

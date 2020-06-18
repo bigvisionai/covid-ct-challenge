@@ -21,12 +21,26 @@ class CTData():
                 Dimension should be equal to no. of classes.
         """
         self.data_frame = pd.read_csv('./data/{}.csv'.format(type_data))
-        # self.transforms = transforms
-        self.transforms = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.ToTensor(),
-            transforms.Normalize(means,stds)
-        ])
+
+        self.transforms = None
+
+        if type_data == 'train':
+            # self.transforms = transforms
+            self.transforms = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.RandomRotation(25),
+                transforms.RandomVerticalFlip(p=0.5),
+                transforms.ToTensor(),
+                transforms.Normalize(means,stds),
+                transforms.RandomErasing(p=0.25)
+            ])
+        else:
+            self.transforms = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.ToTensor(),
+                transforms.Normalize(means,stds)
+            ])
+            
 
         # Train without weights in baseline model
         # self.weights = weights
