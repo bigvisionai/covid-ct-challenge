@@ -132,3 +132,5 @@ dmypy.json
 notebooks
 *.ipynb
 data/
+
+*.DS_Store
