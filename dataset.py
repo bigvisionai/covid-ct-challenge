@@ -44,8 +44,8 @@ class CTData():
         img_tensor = self.transforms(image_raw)
         label = self.data_frame['label'][index]
         if label == 1:
-            label = torch.FloatTensor([1])
+            label = torch.FloatTensor([0, 1])
         else:
-            label = torch.FloatTensor([0])
+            label = torch.FloatTensor([1, 0])
 
         return img_tensor, label

@@ -15,7 +15,7 @@ def _train_model(model, train_loader, epoch, num_epochs, batch_size, optimizer, 
 
     confusion_matrix = torch.zeros([2,2])
 
-    for i, (images, label) in enumerate(train_loader):
+    for batch_no, (images, label) in enumerate(train_loader):
         optimizer.zero_grad()
 
         if torch.cuda.is_available():
@@ -33,7 +33,7 @@ def _train_model(model, train_loader, epoch, num_epochs, batch_size, optimizer, 
 
         probas = torch.softmax(output,dim=1)
 
-        for i in range(len(output)):
+        for i in range(output.size(0)):
             gts.append(int(label[i, 1].item()))
             preds.append(probas[i, 1].item())
 
@@ -49,17 +49,17 @@ def _train_model(model, train_loader, epoch, num_epochs, batch_size, optimizer, 
             auc = 0.5
 
         writer.add_scalar('Train/Loss', loss_value,
-                          epoch * len(train_loader) + i)
+                          epoch * len(train_loader) + batch_no)
 
-        if (i % log_every == 0):
+        if (batch_no % log_every == 0):
             precision = confusion_matrix[1,1].item() / (confusion_matrix[1,0] + confusion_matrix[1,1] + 1e-8).item()
             recall = confusion_matrix[1,1].item() / (confusion_matrix[0,1] + confusion_matrix[1,1] + 1e-8).item()
             train_f1 = (precision*recall) / (precision + recall + 1e-8)
-            print("[Epoch: {0} / {1} | Batch : {2} / {3} ]| Batch Loss : {4} | Train AUC : {5} | Train Accuracy : {6} | F1 Score : {7} | lr : {8}".
+            print("[Epoch: {0} / {1} | Batch : {2} / {3} ]| Batch Loss : {4} | AUC : {5} | Acc : {6} | F1 : {7} | lr : {8}".
                   format(
                       epoch + 1,
                       num_epochs,
-                      i,
+                      batch_no,
                       len(train_loader),
                       np.round(loss_value, 4),
                       np.round(auc, 4),
@@ -82,9 +82,9 @@ def _train_model(model, train_loader, epoch, num_epochs, batch_size, optimizer, 
     writer.add_scalar('Train/Accuracy', train_accuracy, epoch)
     writer.add_scalar('Train/F1_Score', train_f1, epoch)
 
-    return confusion_matrix, train_loss_epoch, train_auc_epoch
+    return confusion_matrix, train_loss_epoch, train_auc_epoch, train_accuracy
 
-def _eval_model(model, train_loader, epoch, num_epochs, batch_size, optimizer, criterion, writer, log_every=10):
+def _eval_model(model, val_loader, epoch, num_epochs, batch_size, criterion, writer, log_every=10):
     
     print("Now Validating...")
     # Set to eval mode
@@ -96,8 +96,7 @@ def _eval_model(model, train_loader, epoch, num_epochs, batch_size, optimizer, c
 
     confusion_matrix = torch.zeros([2,2])
 
-    for i, (images, label) in enumerate(train_loader):
-        optimizer.zero_grad()
+    for batch_no, (images, label) in enumerate(val_loader):
 
         if torch.cuda.is_available():
             images = images.cuda()
@@ -112,7 +111,7 @@ def _eval_model(model, train_loader, epoch, num_epochs, batch_size, optimizer, c
 
         probas = torch.softmax(output,dim=1)
 
-        for i in range(len(output)):
+        for i in range(output.size(0)):
             gts.append(int(label[i, 1].item()))
             preds.append(probas[i, 1].item())
 
@@ -128,18 +127,18 @@ def _eval_model(model, train_loader, epoch, num_epochs, batch_size, optimizer, c
             auc = 0.5
 
         writer.add_scalar('Val/Loss', loss_value,
-                          epoch * len(train_loader) + i)
+                          epoch * len(val_loader) + batch_no)
 
-        if (i % log_every == 0):
+        if (batch_no % log_every == 0):
             precision = confusion_matrix[1,1].item() / (confusion_matrix[1,0] + confusion_matrix[1,1] + 1e-8).item()
             recall = confusion_matrix[1,1].item() / (confusion_matrix[0,1] + confusion_matrix[1,1] + 1e-8).item()
             train_f1 = (precision*recall) / (precision + recall + 1e-8)
-            print("[Epoch: {0} / {1} | Batch : {2} / {3} ]| Batch Loss : {4} | Val AUC : {5} | Val Accuracy : {6} | F1 Score : {7}".
+            print("[Epoch: {0} / {1} | Batch : {2} / {3} ]| Batch Loss : {4} | AUC : {5} | Acc : {6} | F1 : {7}".
                   format(
                       epoch + 1,
                       num_epochs,
-                      i,
-                      len(train_loader),
+                      batch_no,
+                      len(val_loader),
                       np.round(loss_value, 4),
                       np.round(auc, 4),
                       np.round((confusion_matrix[0,0].item() + confusion_matrix[1,1].item()) / confusion_matrix.sum().item(),4),
@@ -160,7 +159,7 @@ def _eval_model(model, train_loader, epoch, num_epochs, batch_size, optimizer, c
     writer.add_scalar('Val/Accuracy', val_accuracy, epoch)
     writer.add_scalar('Val/F1_Score', val_f1, epoch)
 
-    return confusion_matrix, val_loss_epoch, val_auc_epoch
+    return confusion_matrix, val_loss_epoch, val_auc_epoch, val_accuracy
 
 def _get_lr(optimizer):
     for param_group in optimizer.param_groups:

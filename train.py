@@ -55,8 +55,8 @@ def train(config : dict):
     starting_epoch = config['starting_epoch']
     num_epochs = config['max_epoch']
     patience = config['patience']
-    log_train = config['log_train']
-    log_val = config['log_val']
+    log_train = int(config['log_train'])
+    log_val = int(config['log_val'])
 
     best_val_auc = float(0)
 
@@ -70,23 +70,19 @@ def train(config : dict):
         current_lr = _get_lr(optimizer)
         epoch_start_time = time.time()  # timer for entire epoch
 
-        conf_matrix, train_loss, train_auc = _train_model(
+        conf_matrix, train_loss, train_auc, train_acc = _train_model(
             model, train_loader, epoch, num_epochs, config['batch_size'], optimizer, criterion, writer, current_lr, log_train)
-        
-        train_conf += conf_matrix
 
-        conf_matrix_val, val_loss, val_auc = _eval_model(
-            model, val_loader, val_criterion,  epoch, num_epochs, config['batch_size'], writer, current_lr, log_val)
-        
-        val_conf += conf_matrix_val
+        conf_matrix_val, val_loss, val_auc, val_acc = _eval_model(
+            model, val_loader, epoch, num_epochs, config['batch_size'], val_criterion, writer, log_val)
 
         scheduler.step(val_loss)
 
         t_end = time.time()
         delta = t_end - epoch_start_time
 
-        print("train loss : {0} | train auc {1} | val loss {2} | val auc {3} | elapsed time {4} s".format(
-            train_loss, train_auc, val_loss, val_auc, delta))
+        print("train loss : {:0.4f} | train auc {:0.4f} | train acc {:0.4f} | val loss {:0.4f} | val auc {:0.4f} | val acc {:0.4f} |  elapsed time {} s".format(
+            train_loss, train_auc, train_acc, val_loss, val_auc, val_acc, delta))
 
         print('-' * 30)
 
@@ -100,7 +96,7 @@ def train(config : dict):
                 file_name = 'model_{}_val_auc_{:0.4f}_train_auc_{:0.4f}_epoch_{}.pth'.format(config['name'], val_auc, train_auc, epoch+1)
                 torch.save({
                     'model_state_dict': model.state_dict()
-                }, './weights/{}/{}'.format(config['task'],file_name))
+                }, './weights/{}'.format(file_name))
 
     t_end_training = time.time()
     print(f'training took {t_end_training - t_start_training} s')
