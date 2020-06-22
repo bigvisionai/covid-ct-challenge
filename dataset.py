@@ -31,8 +31,7 @@ class CTData():
                 transforms.RandomRotation(25),
                 transforms.RandomVerticalFlip(p=0.5),
                 transforms.ToTensor(),
-                transforms.Normalize(means,stds),
-                transforms.RandomErasing(p=0.25)
+                transforms.Normalize(means,stds)
             ])
         else:
             self.transforms = transforms.Compose([
